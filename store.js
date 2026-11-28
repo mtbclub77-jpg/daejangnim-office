@@ -30,6 +30,7 @@ export const MEMBERS = [
 
 export const CHANNELS = {
   command: { label:'💬 통합 회의실', short:'통합 회의실', icon:'💬', desc:'대장님 지시 · 전체 보고 통합 채널' },
+  updates: { label:'🛠️ 비서실 업데이트방', short:'업데이트방', icon:'🛠️', desc:'맹대리 · 밍인턴 · 임원단 비서실 업데이트 협의' },
 };
 
 export const ROOMS = {

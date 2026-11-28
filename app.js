@@ -1,7 +1,7 @@
 /* =========================================================
    app.js — 대장님 비서실 화면 로직
    ========================================================= */
-import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v77';
+import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v78';
 import { FIREBASE_CONFIG } from './firebase-config.js?v77';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -348,9 +348,20 @@ function renderChatHud() {
   `;
 }
 
+function renderChanTabs() {
+  const wrap = $('#chanTabs');
+  if (!wrap) return;
+  wrap.innerHTML = Object.entries(CHANNELS).map(([k, info]) => {
+    const on = k === state.channel;
+    const u = state.unread[k] || 0;
+    const badge = (!on && u > 0) ? `<span class="chan-tab-badge">${u > 9 ? '9+' : u}</span>` : '';
+    return `<button class="chan-tab ${on ? 'is-on' : ''}" type="button" role="tab" aria-selected="${on}" data-chan="${k}">${esc(info.icon)} ${esc(info.short)}${badge}</button>`;
+  }).join('');
+}
+
 function renderChat(scrollBottom = false) {
   const ch = state.channel;
-  $('#chanTitle').textContent = CHANNELS[ch].label;
+  renderChanTabs();
   const on = MEMBERS.filter(m => m.active && memState(m.id).status !== '한도 소진').length;
   $('#chanOn').textContent = `ON ${on}명`;
   renderChatHud();
@@ -880,7 +891,7 @@ function applyRoute() {
   const [v, ch] = raw.split('/');
   const view = ['map', 'chat', 'tasks', 'status', 'limits', 'library'].includes(v) ? v : 'map';
   if (view === 'chat') {
-    state.channel = 'command';
+    state.channel = (ch && CHANNELS[ch]) ? ch : (CHANNELS[state.channel] ? state.channel : 'command');
   }
   state.view = view;
   $$('.tab').forEach(b => {
@@ -980,6 +991,11 @@ function wire() {
   });
 
   // 상단 상황판 점프 & 말풍선 원클릭 작업등록
+  $('#chanTabs')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-chan]');
+    if (btn && CHANNELS[btn.dataset.chan]) go('chat', btn.dataset.chan);
+  });
+
   $('#chatHud').addEventListener('click', e => {
     const b = e.target.closest('[data-hud]');
     if (b) go(b.dataset.hud);
