@@ -198,12 +198,12 @@
 
       <div class="composer">
         <div class="attach-preview" id="attachPreview" hidden></div>
-        <form class="input-row" autocomplete="off" onsubmit="return false">
+        <div class="input-row">
           <input type="file" id="fileInput" hidden accept="image/*,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.hwpx,.zip">
           <button class="attach-btn" id="attachBtn" type="button" title="사진·파일 첨부 (파일 1.5MB 이하)" aria-label="사진·파일 첨부">📎</button>
-          <textarea id="msgInput" name="office_chat_note" rows="1" placeholder="메시지를 입력하세요" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other"></textarea>
+          <div id="msgInput" contenteditable="plaintext-only" role="textbox" aria-multiline="true" aria-label="메시지 입력" data-placeholder="메시지를 입력하세요" spellcheck="false" autocorrect="off" autocapitalize="off"></div>
           <button class="send-btn" id="sendBtn" type="button" aria-label="전송">전송</button>
-        </form>
+        </div>
         <div class="mention-row" id="mentionRow"></div>
       </div>
     </section>

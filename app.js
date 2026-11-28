@@ -546,13 +546,17 @@ function readSmallFile(file) {
   });
 }
 
+function getMsgText(el) {
+  return (el.innerText || '').replace(/\u00a0/g, ' ');
+}
+
 async function sendMessage() {
   const input = $('#msgInput');
-  const text = input.value.trim();
+  const text = getMsgText(input).trim();
   const att = state.pendingAttach;
   if ((!text && !att) || !store) return;
   const sender = memberById(state.sender);
-  input.value = '';
+  input.textContent = '';
   autoGrow(input);
   state.pendingAttach = null;
   renderAttachPreview();
@@ -960,14 +964,20 @@ function wire() {
     const b = e.target.closest('.mention');
     if (!b) return;
     const input = $('#msgInput');
-    input.value = (input.value + (input.value && !input.value.endsWith(' ') ? ' ' : '') + b.dataset.mention + ' ');
+    const cur = getMsgText(input);
+    input.textContent = cur + (cur && !cur.endsWith(' ') ? ' ' : '') + b.dataset.mention + ' ';
     input.focus();
+    const sel = window.getSelection();
+    if (sel) { sel.selectAllChildren(input); sel.collapseToEnd(); }
     autoGrow(input);
   });
 
   // 입력/전송
   const input = $('#msgInput');
-  input.addEventListener('input', () => autoGrow(input));
+  input.addEventListener('input', () => {
+    if (!getMsgText(input).trim() && input.innerHTML === '<br>') input.innerHTML = '';
+    autoGrow(input);
+  });
   input.addEventListener('focus', () => {
     document.body.classList.add('kb-open');
     fitViewport();
