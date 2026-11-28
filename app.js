@@ -1,8 +1,8 @@
 /* =========================================================
    app.js — 대장님 비서실 화면 로직
    ========================================================= */
-import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v75';
-import { FIREBASE_CONFIG } from './firebase-config.js?v75';
+import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v76';
+import { FIREBASE_CONFIG } from './firebase-config.js?v76';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -549,6 +549,25 @@ function readSmallFile(file) {
 function getMsgText(el) {
   return (el.innerText || '').replace(/\u00a0/g, ' ');
 }
+function placeCaretAtEnd(el) {
+  if (!el) return;
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  if (!sel) return;
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+function insertPlainTextAtCaret(text) {
+  const el = $('#msgInput');
+  if (!el) return;
+  el.focus();
+  if (!document.execCommand || !document.execCommand('insertText', false, text)) {
+    el.textContent = getMsgText(el) + text;
+    placeCaretAtEnd(el);
+  }
+}
 
 async function sendMessage() {
   const input = $('#msgInput');
@@ -974,8 +993,22 @@ function wire() {
 
   // 입력/전송
   const input = $('#msgInput');
+  // iOS 구버전 Safari가 plaintext-only를 해석하지 못하면 편집 불가가 되므로 true로 대체합니다(붙여넣기는 평문으로 정리)
+  if (input.getAttribute('contenteditable') === 'plaintext-only' && !input.isContentEditable) {
+    input.setAttribute('contenteditable', 'true');
+  }
   input.addEventListener('input', () => {
-    if (!getMsgText(input).trim() && input.innerHTML === '<br>') input.innerHTML = '';
+    if (!getMsgText(input).replace(/\n/g, '').trim() && !input.querySelector('img')) input.innerHTML = '';
+    autoGrow(input);
+  });
+  input.addEventListener('paste', e => {
+    const dt = e.clipboardData || window.clipboardData;
+    if (!dt) return;
+    const txt = dt.getData('text/plain');
+    if (txt == null) return;
+    e.preventDefault();
+    insertPlainTextAtCaret(txt);
+    if (!getMsgText(input).replace(/\n/g, '').trim()) input.innerHTML = '';
     autoGrow(input);
   });
   input.addEventListener('focus', () => {
