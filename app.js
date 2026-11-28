@@ -1,8 +1,8 @@
 /* =========================================================
    app.js — 대장님 비서실 화면 로직
    ========================================================= */
-import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v76';
-import { FIREBASE_CONFIG } from './firebase-config.js?v76';
+import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v77';
+import { FIREBASE_CONFIG } from './firebase-config.js?v77';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -382,10 +382,13 @@ function msgHtml(m) {
   const fileHtml = m.file ? `<a class="m-file" href="${esc(m.file.data)}" download="${esc(m.file.name)}">📎 ${esc(m.file.name)} <span>(${Math.max(1, Math.round((m.file.size || 0) / 1024))}KB)</span></a>` : '';
   const ackCls = (m.ack === '전달됨' || m.ack === '처리 중') ? 'is-wait' : (m.ack === '실패' ? 'is-err' : '');
   const ackHtml = (me && m.ack) ? `<span class="m-ack ${ackCls}">${esc(m.ack)}</span>` : '';
+  const toList = Array.isArray(m.to) ? m.to : (m.to ? [m.to] : []);
+  const toHtml = toList.length ? `<span class="m-to">→ ${toList.map(id => esc(memberById(id).label)).join(', ')}</span>` : '';
+  const behalfHtml = m.onBehalfOf ? `<span class="m-behalf">대리 · ${esc(memberById(m.onBehalfOf).label)}</span>` : '';
   return `<div class="msg ${me ? 'me' : ''}">
       <span class="m-av">${mb.emoji}</span>
       <div class="m-body">
-        <div class="m-meta"><b>${esc(mb.label)}</b><span>${esc(mb.role || '')}</span><span>${fmtTime(m.ts)}</span>${ackHtml}<button class="m-to-task" type="button" data-to-task="${esc(m.id)}" title="작업실 카드로 등록">📋 작업등록</button></div>
+        <div class="m-meta"><b>${esc(mb.label)}</b><span>${esc(mb.role || '')}</span>${behalfHtml}${toHtml}<span>${fmtTime(m.ts)}</span>${ackHtml}<button class="m-to-task" type="button" data-to-task="${esc(m.id)}" title="작업실 카드로 등록">📋 작업등록</button></div>
         <div class="m-bubble">${imgHtml}${fileHtml}${text ? `<div>${text}</div>` : ''}</div>
       </div>
     </div>`;
@@ -394,11 +397,16 @@ function msgHtml(m) {
 function renderHeartbeat() {
   const el = $('#hbWarn');
   if (!el) return;
-  const ts = state.heartbeat && state.heartbeat.ts;
+  const staffPolls = ['maeng', 'daeng', 'staff4']
+    .filter(id => memState(id).status !== '한도 소진')
+    .map(id => Number((state.members[id] || {}).lastPollAt) || 0)
+    .filter(Boolean);
+  const hbTs = Number(state.heartbeat && state.heartbeat.ts) || 0;
+  const ts = Math.max(hbTs, ...(staffPolls.length ? staffPolls : [0]));
   if (!ts) { el.hidden = true; return; }
   const ageMs = Date.now() - ts;
-  if (ageMs > 12 * 60 * 1000) {
-    el.innerHTML = `<span>⚠️ <b>자동 감시 멈춤</b> · 마지막 확인 ${esc(timeAgo(ts))} (한도 소진·퇴근 상태일 수 있음)</span>`;
+  if (ageMs > 11 * 60 * 1000) {
+    el.innerHTML = `<span>⚠️ <b>자동 감시 멈춤</b> · 마지막 폴링 ${esc(timeAgo(ts))} (11분 초과 · 한도 소진·퇴근 상태일 수 있음)</span>`;
     el.hidden = false;
   } else {
     el.hidden = true;
@@ -580,11 +588,19 @@ async function sendMessage() {
   state.pendingAttach = null;
   renderAttachPreview();
   const payload = { senderId: sender.id, text, ts: Date.now() };
+  const toMap = { '맹대리': 'maeng', '댕주임': 'daeng', '밍인턴': 'staff4' };
+  const to = [];
+  for (const [k, v] of Object.entries(toMap)) {
+    if (text.includes('@' + k) && !to.includes(v)) to.push(v);
+  }
+  if (to.length) payload.to = to;
   if (att && att.kind === 'image') payload.img = att.data;
   if (att && att.kind === 'file') payload.file = { name: att.name, size: att.size, data: att.data };
   try {
     await store.push(`channels/${state.channel}/messages`, payload);
-    store.update(`members/${sender.id}`, { lastSeen: Date.now() }).catch(() => {});
+    const patch = { lastSeen: Date.now() };
+    if (!sender.chief && !sender.advisor) patch.lastResponseAt = Date.now();
+    store.update(`members/${sender.id}`, patch).catch(() => {});
     markChannelSeen(state.channel);
   } catch (e) {
     console.error(e);
@@ -739,6 +755,12 @@ function renderStatus() {
     ).join('');
     const seen = lastSeenOf(m.id);
     const seenTxt = seen ? timeAgo(seen) : (m.advisor ? '자문 대기' : '기록 없음');
+    const pollTs = Number((state.members[m.id] || {}).lastPollAt) || 0;
+    const respTs = Number((state.members[m.id] || {}).lastResponseAt) || seen;
+    const isStaff = !m.chief && !m.advisor && m.active;
+    const pollTxt = pollTs ? timeAgo(pollTs) : '미기록';
+    const respTxt = respTs ? timeAgo(respTs) : '미기록';
+    const pollWarn = isStaff && pollTs && st.status !== '한도 소진' && (Date.now() - pollTs > 11 * 60 * 1000);
     const activeTasks = !m.chief ? Object.values(state.tasks || {})
       .filter(t => t && t.assignee === m.id && (t.status === 'doing' || t.status === 'waiting'))
       .sort((a, b) => (a.status === 'doing' ? -1 : 1) - (b.status === 'doing' ? -1 : 1)) : [];
@@ -780,7 +802,9 @@ function renderStatus() {
       ${workBlock}
       <div class="mcard-meta">
         ${m.advisor ? `<span class="badge-delegate">${esc(m.badge || '자문 고문')}</span>` : ''}
-        <span class="mcard-seen" title="${seen ? esc(fmtAbsolute(seen)) : ''}">마지막 활동 <b>${esc(seenTxt)}</b></span>
+        ${isStaff
+          ? `<span class="mcard-seen" title="${pollTs ? esc(fmtAbsolute(pollTs)) : ''}">최근 폴링 <b class="${pollWarn ? 'is-warn' : ''}">${esc(pollTxt)}</b> · 최근 응답 <b>${esc(respTxt)}</b></span>`
+          : `<span class="mcard-seen" title="${seen ? esc(fmtAbsolute(seen)) : ''}">마지막 활동 <b>${esc(seenTxt)}</b></span>`}
       </div>
       ${controlsBlock}
     </article>`;
