@@ -12,20 +12,20 @@ const LS_KEY = 'daejangnim-office-v1';
 
 /* ---------------- 멤버 설정 (여기에 한 줄 추가하면 사원이 늘어나고, active:false면 빈자리) ---------------- */
 export const MEMBERS = [
-  { id:'daejangnim', name:'김현준', label:'대장님', emoji:'👑', role:'대장', chief:true, active:true, accent:'gold',
-    area:'전체 지휘 · 의사결정 · 최종 승인', defaultRoom:'command', defaultStatus:'재실' },
-  { id:'maeng', name:'맹대리', label:'맹대리', emoji:'💼', role:'메인 비서', active:true, accent:'blue',
-    area:'일정·노션·골프장 운영·문서 총괄, 실행 대행', defaultRoom:'work', defaultStatus:'대기 중' },
-  { id:'daeng', name:'댕주임', label:'댕주임', emoji:'🐕', role:'서브 비서', active:true, accent:'warm',
-    area:'블로그(골프장 안에서)·뉴스·SNS 루틴, 반복 업무 지원', defaultRoom:'work', defaultStatus:'대기 중' },
-  { id:'gu', name:'잼이사', label:'잼이사', emoji:'💎', role:'이사 · 구글 워크스페이스/자료 요약', active:true, advisor:true, accent:'indigo',
-    badge:'임원', area:'Gemini — 구글 워크스페이스·Tasks·자료조사·요약 · 밍인턴 대리 발신 (임원실)', defaultRoom:'meeting', defaultStatus:'자문 대기' },
-  { id:'jigo', name:'지고문', label:'지고문', emoji:'🧠', role:'분석·기획·카피', active:true, advisor:true, accent:'mint',
-    badge:'자문 고문', area:'ChatGPT — 분석·기획·카피 동시 자문 · 밍인턴 대리 발신 (임원실)', defaultRoom:'meeting', defaultStatus:'자문 대기' },
-  { id:'keugo', name:'클고문', label:'클고문', emoji:'🦉', role:'문서·검수·리스크 점검', active:true, advisor:true, accent:'amber',
-    badge:'자문 고문', area:'Claude — 문서·검수·리스크 점검 동시 자문 · 밍인턴 대리 발신 (임원실)', defaultRoom:'meeting', defaultStatus:'자문 대기' },
-  { id:'staff4', name:'밍인턴', label:'밍인턴', emoji:'🌱', role:'막내 인턴 · 허브/살림꾼', active:true, accent:'mint',
-    area:'비서실 연락·호출 허브, 지시 자동분류·상태·노션 일지 관리, 고문·이사 웹 질의/발신 대행, 영상·웹 개발 실행', defaultRoom:'work', defaultStatus:'대기 중' },
+  { id:'daejangnim', name:'김현준', label:'대장님', emoji:'👑', role:'지휘실 · 총괄 의사결정', chief:true, active:true, accent:'gold',
+    area:'최종 의사결정 · 방향 지시 · 결재', defaultRoom:'command', defaultStatus:'재실' },
+  { id:'maeng', name:'맹대리', label:'맹대리', emoji:'💼', role:'총괄 · 조정 (메인 비서)', active:true, accent:'blue',
+    area:'일상·실무 지원 및 최종 보고 · 보안·GitHub·게이트 관리 · 매일 21:00 업데이트 회의 주관 및 산출물 검수·중계', defaultRoom:'work', defaultStatus:'대기 중' },
+  { id:'daeng', name:'댕주임', label:'댕주임', emoji:'🐕', role:'제작 · 모니터링 (서브 비서)', active:true, accent:'warm',
+    area:'매일 11:00 블로그·쇼츠·릴스·스레드 원고/카드 제작 및 토요일 주간 초안 7편 · 시트·뉴스 모니터링(09/14/19시)·리뷰', defaultRoom:'work', defaultStatus:'대기 중' },
+  { id:'gu', name:'잼이사', label:'잼이사', emoji:'💎', role:'임원실 · 자료조사·요약', active:true, advisor:true, accent:'indigo',
+    badge:'임원', area:'Gemini — 구글 검색 기반 1차 자료조사·요약 · Google Tasks 보조 · 밍인턴 대리 발신', defaultRoom:'meeting', defaultStatus:'자문 대기' },
+  { id:'jigo', name:'지고문', label:'지고문', emoji:'🧠', role:'임원실 · 기획·구조 설계', active:true, advisor:true, accent:'mint',
+    badge:'자문 고문', area:'ChatGPT — 기획·구조 설계 자문 및 1차 교차검증 · 밍인턴 대리 발신', defaultRoom:'meeting', defaultStatus:'자문 대기' },
+  { id:'keugo', name:'클고문', label:'클고문', emoji:'🦉', role:'임원실 · 보안·리스크 검증', active:true, advisor:true, accent:'amber',
+    badge:'자문 고문', area:'Claude — 보안·리스크·논리·프롬프트 검증 · 밍인턴 대리 발신', defaultRoom:'meeting', defaultStatus:'자문 대기' },
+  { id:'staff4', name:'밍인턴', label:'밍인턴', emoji:'🌱', role:'웹앱 · 채널 운영 · 기록 (막내 인턴)', active:true, accent:'mint',
+    area:'비서실 웹앱(daejangnim-office) 개발·배포 및 패치방 공지 · @golfjun2026 스레드·SNS 성장 루틴 · 매일 22:00 노션 일지 마감', defaultRoom:'work', defaultStatus:'대기 중' },
 ];
 
 export const CHANNELS = {

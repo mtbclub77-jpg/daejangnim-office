@@ -1,7 +1,7 @@
 /* =========================================================
    app.js — 대장님 비서실 화면 로직
    ========================================================= */
-import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v78';
+import { createStore, MEMBERS, CHANNELS, ROOMS, STATUSES, ADVISOR_STATUSES, TASK_STATUS, memberById } from './store.js?v81';
 import { FIREBASE_CONFIG } from './firebase-config.js?v77';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -794,7 +794,7 @@ function renderBriefing() {
    ========================================================= */
 function renderStatus() {
   const host = $('#statusGrid');
-  host.innerHTML = MEMBERS.map(m => {
+  const cardsHtml = MEMBERS.map(m => {
     const st = memState(m.id);
     const opts = m.chief ? ['재실', ...STATUSES] : m.advisor ? ADVISOR_STATUSES : STATUSES;
     const statusBtns = opts.map(s =>
@@ -859,6 +859,19 @@ function renderStatus() {
       ${controlsBlock}
     </article>`;
   }).join('');
+  const pipelineHtml = `
+    <article class="mcard" style="grid-column:1/-1">
+      <div class="mcard-top">
+        <span class="mcard-av" data-accent="gold">🔁</span>
+        <span class="mcard-name"><b>핵심 협업 파이프라인</b><span>2026-11-28 현행화</span></span>
+      </div>
+      <div class="mcard-work">
+        <div class="mcard-witem"><span class="wbadge">콘텐츠 발행</span><span>댕주임(매일 11:00 원고·카드 제작) → 맹대리(검수·전달) → 밍인턴(스레드 업로드·SNS 성장)</span></div>
+        <div class="mcard-witem"><span class="wbadge">비서실 패치</span><span>맹대리+임원단(매일 21:00 회의·노션 정리) → 밍인턴(웹앱 구현·배포·패치방 공지)</span></div>
+        <div class="mcard-witem"><span class="wbadge">일일 마감</span><span>비서 3인 활동 취합 → 밍인턴(매일 22:00 노션 비서실 일지 마감)</span></div>
+      </div>
+    </article>`;
+  host.innerHTML = cardsHtml + pipelineHtml;
   $('#statusUpdated').textContent = state.loaded ? '실시간 반영 중' : '불러오는 중…';
 }
 
