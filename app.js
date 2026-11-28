@@ -50,7 +50,8 @@ const statusKey = s => STATUS_KEY[s] || 'idle';
 /* ---------------- 시간 ---------- */
 const pad = n => String(n).padStart(2, '0');
 function fmtTime(ts) {
-  const d = new Date(ts), h = d.getHours();
+  if (!ts || !Number.isFinite(Number(ts))) return '시간 미상';
+  const d = new Date(Number(ts)), h = d.getHours();
   return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${pad(d.getMinutes())}`;
 }
 function fmtDay(ts) {
@@ -373,20 +374,42 @@ function renderChat(scrollBottom = false) {
   } else {
     let html = '', day = '';
     arr.forEach(m => {
-      const d = fmtDay(m.ts);
-      if (d !== day) { html += `<div class="day-sep">${esc(d)}</div>`; day = d; }
+      if (m.ts > 0) {
+        const d = fmtDay(m.ts);
+        if (d !== day) { html += `<div class="day-sep">${esc(d)}</div>`; day = d; }
+      }
       html += msgHtml(m);
     });
     list.innerHTML = html;
   }
+  renderComposerSender();
   if (scrollBottom) {
     const sc = $('#chatScroll');
     requestAnimationFrame(() => { sc.scrollTop = sc.scrollHeight; });
   }
 }
 
+function resolveMsgSender(senderId) {
+  if (!senderId) return { id: 'unknown', label: '미상 (발신자 누락)', emoji: '❓', role: '미확인', unknown: true };
+  if (senderId === 'system') return { id: 'system', label: '시스템', emoji: '⚙️', role: '자동 알림' };
+  const found = MEMBERS.find(m => m.id === senderId);
+  if (found) return found;
+  return { id: String(senderId), label: `미등록 (${senderId})`, emoji: '❓', role: '미확인', unknown: true };
+}
+
+function renderComposerSender() {
+  const el = $('#composerSender');
+  if (!el) return;
+  const s = memberById(state.sender);
+  const proxy = state.sender !== 'daejangnim';
+  el.classList.toggle('is-proxy', proxy);
+  el.innerHTML = proxy
+    ? `⚠️ 현재 발신자: <b>${s.emoji} ${esc(s.label)}</b> (대리 발신 모드)`
+    : `${s.emoji} <b>${esc(s.label)}</b>으로 발신 중`;
+}
+
 function msgHtml(m) {
-  const mb = memberById(m.senderId);
+  const mb = resolveMsgSender(m.senderId);
   const me = m.senderId === 'daejangnim';
   const text = m.text ? esc(m.text).replace(/@([가-힣A-Za-z0-9_]+)/g, '<span class="m-mention">@$1</span>') : '';
   const imgHtml = m.img ? `<img class="m-img" src="${esc(m.img)}" alt="첨부 사진" loading="lazy">` : '';
@@ -426,9 +449,17 @@ function renderHeartbeat() {
 
 function onMessages(channel, obj) {
   const arr = Object.entries(obj || {})
-    .map(([id, v]) => Object.assign({ id }, v))
-    .filter(m => m && typeof m.ts === 'number')
-    .sort((a, b) => a.ts - b.ts)
+    .map(([id, v]) => {
+      if (!v || typeof v !== 'object') return null;
+      let ts = Number(v.ts);
+      if (!Number.isFinite(ts) || ts <= 0) {
+        const parsed = v.createdAt ? Date.parse(v.createdAt) : NaN;
+        ts = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+      }
+      return Object.assign({ id }, v, { ts });
+    })
+    .filter(Boolean)
+    .sort((a, b) => (a.ts || Number.MAX_SAFE_INTEGER) - (b.ts || Number.MAX_SAFE_INTEGER))
     .slice(-MSG_LIMIT);
   state.messages[channel] = arr;
   const maxTs = arr.length ? arr[arr.length - 1].ts : 0;
@@ -594,11 +625,19 @@ async function sendMessage() {
   const att = state.pendingAttach;
   if ((!text && !att) || !store) return;
   const sender = memberById(state.sender);
+  const now = Date.now();
+  const dedupKey = `${sender.id}|${state.channel}|${text}`;
+  if (!att && state.lastSentKey === dedupKey && (now - (state.lastSentAt || 0)) < 3000) {
+    toast('같은 메시지를 방금 보냈습니다');
+    return;
+  }
+  state.lastSentKey = dedupKey;
+  state.lastSentAt = now;
   input.textContent = '';
   autoGrow(input);
   state.pendingAttach = null;
   renderAttachPreview();
-  const payload = { senderId: sender.id, text, ts: Date.now() };
+  const payload = { senderId: sender.id, senderName: sender.label, text, ts: now };
   const toMap = { '맹대리': 'maeng', '댕주임': 'daeng', '밍인턴': 'staff4' };
   const to = [];
   for (const [k, v] of Object.entries(toMap)) {
@@ -653,7 +692,7 @@ function renderTasks() {
               isStale ? `<span class="t-badge is-stale">⏳ 정체 24h+</span>` : '',
             ].filter(Boolean).join('');
             return `<div class="task ${isDone ? 'is-done' : ''} ${isStale ? 'is-stale' : ''}">
-              <div class="task-txt">${badges ? `<div class="task-badges">${badges}</div>` : ''}${esc(t.title)}</div>
+              <div class="task-txt">${badges ? `<div class="task-badges">${badges}</div>` : ''}<span class="task-title-txt">${esc(t.title)}</span></div>
               <div class="task-meta">
                 <span class="task-who">${a.emoji} ${esc(a.label)} · ${timeAgo(t.ts)}</span>
                 <span class="task-btns">

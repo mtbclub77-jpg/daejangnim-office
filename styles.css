@@ -468,8 +468,8 @@ button{cursor:pointer;border:0;background:none}
 
 .chat-inner{display:flex;flex-direction:column;gap:10px;padding-bottom:6px;margin-top:auto;width:100%}
 
-.day-sep{display:flex;align-items:center;gap:10px;margin:6px 2px;color:var(--muted-2);font-size:10.5px;font-weight:700}
-.day-sep::before,.day-sep::after{content:"";flex:1;height:1px;background:rgba(140,163,203,.14)}
+.day-sep{display:flex;align-items:center;gap:10px;margin:10px 0 4px;width:100%;flex:none;white-space:nowrap;color:var(--muted-2);font-size:10.5px;font-weight:700;line-height:1.2;clear:both}
+.day-sep::before,.day-sep::after{content:"";flex:1;min-width:16px;height:1px;background:rgba(140,163,203,.14)}
 
 .msg{display:flex;gap:8px;max-width:88%;animation:msgIn .22s ease both}
 @keyframes msgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -499,6 +499,9 @@ button{cursor:pointer;border:0;background:none}
   background:linear-gradient(180deg,rgba(10,16,28,0),rgba(10,16,28,.92) 26%);
   border-top:1px solid rgba(140,163,203,.1);
 }
+.composer-sender{display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:0 2px;font-size:11px;color:var(--muted);line-height:1.2}
+.composer-sender b{color:var(--gold);font-weight:800}
+.composer-sender.is-proxy{padding:4px 8px;border-radius:8px;background:rgba(240,185,11,.12);border:1px solid rgba(240,185,11,.35);color:#f3ecd9}
 .send-as{display:flex;gap:7px;align-items:center;margin-bottom:7px;overflow-x:auto;scrollbar-width:none}
 .send-as::-webkit-scrollbar{display:none}
 .send-as-lbl{font-size:10.5px;color:var(--muted-2);font-weight:700;flex:none}
@@ -560,7 +563,7 @@ button{cursor:pointer;border:0;background:none}
 }
 .task.is-done{opacity:.72}
 .task-txt{font-size:13px;line-height:1.4;word-break:break-word}
-.task.is-done .task-txt{text-decoration:line-through;color:var(--muted)}
+.task.is-done .task-title-txt{text-decoration:line-through;color:var(--muted)}
 .task-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
 .task-who{font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:5px}
 .task-btns{display:flex;gap:5px}
